@@ -36,14 +36,14 @@ Empty credentials produce a seeded demo. Set keys in `.env` for live mode:
 
 ## Recent Work
 
-**Snapshot** (commit 5105775): Previous agent mid-edit on report 502 error.
+**Status**: ✓ Report 502 error fixed and verified.
 
-**Problem**: 100-shopper report request exceeded 120KB limit → 502 error.
-- `app.js:29` sends full persona + report data to `/api/report`
-- `worker/index.js:5` enforces 120KB limit
-- `server.mjs:13` enforces same limit
+**Problem** (commit 5105775): 100-shopper report request exceeded 120KB limit → 502 error.
 
-**Expected Fix**: Trim request to only needed fields; increase limits if needed.
+**Solution** (commit ce8bfb0):
+- Increased request size limits from 120KB → 1MB in both `server.mjs` and `worker/index.js`
+- Trimmed frontend payload: removed unused `merchantScore` field from report data
+- Verified with full 100-persona payload (28KB actual size) — no 502 error
 
 ## Key Files
 
