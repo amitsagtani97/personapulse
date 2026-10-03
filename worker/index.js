@@ -2,7 +2,7 @@ const BASE='https://clawapi.ecap.gsmo.ai/service/v1';
 const json=(x,s=200)=>new Response(JSON.stringify(x),{status:s,headers:{'content-type':'application/json','cache-control':'no-store'}});
 const cut=(x,n=350)=>String(x??'').replace(/[\u0000-\u001f]/g,' ').slice(0,n);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-async function read(req){const raw=await req.text();if(raw.length>120000)throw Error('Request too large');return JSON.parse(raw||'{}')}
+async function read(req){const raw=await req.text();if(raw.length>1000000)throw Error('Request too large');return JSON.parse(raw||'{}')}
 async function fetchJson(url,opts={}){const r=await fetch(url,{...opts,signal:AbortSignal.timeout(opts.timeout||20000)});const t=await r.text();let d;try{d=JSON.parse(t)}catch{d={message:t.slice(0,200)}}if(!r.ok)throw Error(`Provider ${r.status}: ${d?.error?.message||d.message||'failed'}`);return d}
 const zoo=(env,path,method='GET',data)=>fetchJson(`${(env.ZOOWORK_BASE_URL||BASE).replace(/\/$/,'')}${path}`,{method,headers:{authorization:`Bearer ${env.ZOOWORK_API_KEY}`,'content-type':'application/json'},body:data?JSON.stringify(data):undefined});
 function site(value){let u;try{u=new URL(value)}catch{throw Error('Enter a complete website URL')}const d=u.hostname.toLowerCase().replace(/^www\./,'');if(!['https:','http:'].includes(u.protocol)||u.username||u.password||d==='localhost'||d.endsWith('.local')||d.endsWith('.internal')||/^[\d.:]+$/.test(d))throw Error('Use a public website URL');return {url:u.href,domain:d,name:d.split('.')[0].replace(/[-_]/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}}
