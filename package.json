@@ -1,1 +1,1 @@
-{"name":"personapulse","version":"1.0.0","private":true,"type":"module","scripts":{"start":"node server.mjs","dev":"node server.mjs","check":"node --check server.mjs && node --check dist/app.js && node --check lib/adapters.mjs"}}
+{"name":"personapulse","version":"2.0.0","private":true,"type":"module","scripts":{"start":"node server.mjs","dev":"node server.mjs","build":"node scripts/build.mjs","check":"node --check worker/index.js && node --check web/app.js && node --check web/data.js && node --check scripts/build.mjs && node --check server.mjs"}}
