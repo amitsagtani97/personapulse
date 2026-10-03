@@ -24,3 +24,8 @@ test('shopper uses the shared ZooWork agent and filters citations',async()=>{
 test('report counts live journeys without claiming measured sales',async()=>{
  const r=await call('/api/report',{reports:[{runSource:'live',persona:{age:29,gender:'Woman',budget:'Value'},report:{choice:'merchant',merchantScore:70,friction:'Sizing'}},{runSource:'error',persona:{age:39,gender:'Man',budget:'Premium'},report:{choice:'competitor'}}]});const d=await r.json();assert.equal(d.stats.completed,1);assert.equal(d.stats.merchantWins,1);assert.equal(d.stats.segments.find(x=>x.segment==='18–29').merchant,1);
 });
+
+test('full 100-person report stays within accepted request size',async()=>{
+ const reports=Array.from({length:100},(_,id)=>({persona:{id,name:`Shopper ${id}`,age:18+id%50,gender:'Woman',budget:'Value',goal:'Compare fit and delivery'},runSource:'live',report:{choice:'undecided',merchantScore:50,friction:'Sizing details '.repeat(13),opportunity:'Show measurements '.repeat(12)}}));
+ const r=await call('/api/report',{reports});const d=await r.json();assert.equal(r.status,200);assert.equal(d.stats.completed,100);
+});
