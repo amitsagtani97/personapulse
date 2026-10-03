@@ -36,14 +36,49 @@ Empty credentials produce a seeded demo. Set keys in `.env` for live mode:
 
 ## Recent Work
 
-**Status**: ✓ Report 502 error fixed and verified.
+**Status**: live mode verified end to end against real ZooWork + Tavily.
 
-**Problem** (commit 5105775): 100-shopper report request exceeded 120KB limit → 502 error.
+**Report 502** (was: 100-shopper request exceeded the 120KB limit)
+- Raised request limits 120KB → 1MB in `server.mjs` and `worker/index.js`
+- Trimmed the frontend payload (dropped unused `merchantScore`)
+- Verified live: 100 rows = 31KB, HTTP 200 in ~40s, 5 real recommendations
 
-**Solution** (commit ce8bfb0):
-- Increased request size limits from 120KB → 1MB in both `server.mjs` and `worker/index.js`
-- Trimmed frontend payload: removed unused `merchantScore` field from report data
-- Verified with full 100-persona payload (28KB actual size) — no 502 error
+**Tavily `site:` operator is unreliable — use `include_domains`**
+Tavily does not reliably honour `site:target.com` in the query string; it
+returned Wiktionary/Apple/Merriam-Webster results, which the domain filter
+then discarded, leaving the merchant with **zero** evidence pages while the
+competitor got 7. `include_domains: [domain]` returns correct product pages
+for both. `search()` now takes a `domains` argument. Do not reintroduce
+`site:` in query text.
+
+**Floor animation**
+Personas never entered the stores because demo phase durations were 500ms —
+far too short to walk there. Now 7s/7s/2.5s (demo) and 9s/18s (live), with
+separate travel/browse speeds and a slow vertical sweep per aisle. Worker
+starts are staggered so the floor fills continuously (demo pool 18, live 6).
+Initial phase is now looked up by persona id, not `index < run.length`.
+
+## Live timings (measured)
+
+| Call | Latency |
+|---|---|
+| `/api/persona`, temp agent per call | ~96s |
+| `/api/persona`, persistent `ZOOWORK_AGENT_ID` | ~47s |
+| `/api/report`, 100 rows | ~40s |
+
+Always set `ZOOWORK_AGENT_ID` — it halves per-shopper latency. A full
+100-person run at 6 concurrent is ~13 min. Create one with
+`POST /agents` (model + `tool_policy.allow: [web_search, web_fetch]`),
+then `POST /agents/{id}/start`.
+
+## Known gaps
+
+- `BAND_CHAT_ID` is unset, so `/api/status` reports `band: false` and the
+  focus group runs via ZooWork without being recorded in Band.
+- `BAND_AGENT_ID` is present in `.env` but no code reads it; the Band
+  adapter authenticates with `BAND_API_KEY` and targets `BAND_CHAT_ID`.
+- Credentials were pasted into a chat session on 2026-10-03 — rotate the
+  ZooWork, Tavily and Band keys after the hackathon.
 
 ## Key Files
 
@@ -61,8 +96,8 @@ npm run build    # Build Cloudflare Worker
 
 ## Next Steps
 
-1. Fix report 502 by trimming request fields and/or raising size limits
-2. Verify with 10-shopper test run
-3. Reduce "undecided" outcomes by refining shopper decision logic
-4. Smooth walking animations
-5. Plan Cloudflare deployment with Wrangler
+1. ~~Fix report 502~~ done, verified live
+2. ~~Smooth walking animations~~ done
+3. Reduce "undecided" outcomes — have each shopper research its own goal
+   and record a tentative preference when evidence supports it
+4. Plan Cloudflare deployment with Wrangler
