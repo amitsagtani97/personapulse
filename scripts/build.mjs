@@ -1,7 +1,7 @@
 import { readFile, mkdir, writeFile, cp } from 'node:fs/promises';
 import { join } from 'node:path';
 const root = new URL('../', import.meta.url);
-const files = ['index.html','styles.css','app.js','data.js','favicon.svg'];
+const files = ['index.html','styles.css','app.js','favicon.svg'];
 const assets = Object.fromEntries(await Promise.all(files.map(async file => [file, await readFile(new URL(`web/${file}`, root), 'utf8')])));
 const source = await readFile(new URL('worker/index.js', root), 'utf8');
 const out = new URL('dist/server/', root);
