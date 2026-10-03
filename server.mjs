@@ -4,6 +4,15 @@ import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { band, tavily, zoowork } from './lib/adapters.mjs';
 
+// Local-only env loading without a package dependency. Never serve this file.
+try {
+  const env = await readFile(new URL('.env', import.meta.url), 'utf8');
+  for (const line of env.split(/\r?\n/)) {
+    const match = line.match(/^([A-Z][A-Z0-9_]*)=(.*)$/);
+    if (match && process.env[match[1]] === undefined) process.env[match[1]] = match[2].replace(/^['"]|['"]$/g, '');
+  }
+} catch {}
+
 const root = join(fileURLToPath(new URL('.', import.meta.url)), 'dist');
 const types = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css', '.svg':'image/svg+xml', '.json':'application/json' };
 const json = (res, code, value) => { res.writeHead(code, { 'content-type':'application/json', 'cache-control':'no-store' }); res.end(JSON.stringify(value)); };
